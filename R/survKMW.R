@@ -1,6 +1,6 @@
 survKMW <-
   function(object, x, y, conf = FALSE, n.boot = 1000, conf.level = 0.95,
-           lower.tail = FALSE, cluster = FALSE, ncores = NULL)
+           lower.tail = FALSE, cluster = FALSE, ncores = NULL, na.rm=T)
   {
     if (missing(object))
       stop("Argument 'object' is missing, with no default")
@@ -8,35 +8,102 @@ survKMW <-
       x <- 0
     if (missing(y))
       y <- max(object[[1]]$Stime)
-    if (length(x) > 1) stop("Length of 'x' must be 1")
+    if (length(x) != length(lower.tail))
+      stop("Arguments 'x' and 'lower.tail' must have the same length")
+    lenc <- dim(object[[1]])[2]
+    ntimes <- lenc%/%2
+    if (any(x < 0))
+      stop("'x' values should be nonnegative")
+    if (any(y < 0))
+      stop("'y' values should be nonnegative")
+    if (any(y < max(x)))
+      stop("'y' values should be equal or greater than all values in 'x'")
+    if (length(x) != ntimes-1) {
+      cat("The number of consecutive event times in", substitute(object), "is", ntimes, ". The length of 'x' should be", ntimes-1,"\n")
+      stop("The length of 'x' is not supported for the selected 'object'")
+    }
 
-    y <- y[y >= x]
+    y <- y[y >= max(x)]
     y <- sort(unique(y))
+
+    text1 <- paste0("T", c(1:length(x)))
+    text2 <- ifelse(lower.tail == TRUE, "<=", ">")
+    text3 <- paste0(text1, text2, x, collapse = ",")
+
     res <- rep(0, length(y))
     res.li <- rep(0, length(y))
     res.ls <- rep(0, length(y))
 
+    if (ntimes == 2) {
+      if (lower.tail == FALSE)
+      {
+        if(x == 0) {
+          for (k in 1: length(y)) { res[k] <- KM(object[[1]]$Stime, object[[1]]$event, y[k])}
+        }
+        else{
+          G2 <- KMW(object[[1]]$time1, object[[1]]$event1)
+          G1 <- KMW(object[[1]]$Stime, object[[1]]$event)
+          p2 <- which(object[[1]]$time1 <= x)
+          if (length(p2) == 0){
+            p2 <- which(object[[1]]$time1 > x)
+            den <- sum(G2[p2])
+          }
+          else { den <- 1 - sum(G2[p2])}
 
-    if (lower.tail == FALSE)
-    {
-      G2 <- KMW(object[[1]]$time1, object[[1]]$event1)
-      G1 <- KMW(object[[1]]$Stime, object[[1]]$event)
-      p2 <- which(object[[1]]$time1 <= x)
-      for (k in 1: length(y)) {
-        p1 <- which(object[[1]]$time1 > x & object[[1]]$Stime <= y[k])
-        res[k] <- 1 - sum(G1[p1])/(1 - sum(G2[p2]))
+          if (den == 0) stop("Insufficient data.")
+          for (k in 1: length(y)) {
+            p1 <- which(object[[1]]$time1 > x & object[[1]]$Stime <= y[k])
+            if (length(p1) == 0) stop("Insufficient data.")
+            res[k] <- 1 - sum(G1[p1])/den
+            if (res[k] < 0) res[k] <- 0
+          }
+        }
+      }
+
+      if (lower.tail == TRUE)
+      {
+        G2 <- KMW(object[[1]]$time1, object[[1]]$event1)
+        G1 <- KMW(object[[1]]$Stime, object[[1]]$event)
+        p2 <- which(object[[1]]$time1 <= x)
+        if (length(p2) == 0) stop("Insufficient data.")
+        for (k in 1: length(y)) {
+          p1 <- which(object[[1]]$time1 <= x & object[[1]]$Stime <= y[k])
+          if (length(p1) == 0) stop("Insufficient data.")
+          den <- sum(G2[p2])
+          if (den == 0){
+            res[k] <- NA
+          }else{
+            res[k] <- 1 - sum(G1[p1])/ den
+            if (res[k] < 0) res[k] <- 0
+          }
+        }
       }
     }
 
-    if (lower.tail == TRUE)
-    {
-      G2 <- KMW(object[[1]]$time1, object[[1]]$event1)
+    if (ntimes > 2) {
+
+      G2 <- KMW(object[[1]][,2*ntimes-3], object[[1]][,2*ntimes-2])
       G1 <- KMW(object[[1]]$Stime, object[[1]]$event)
-      p2 <- which(object[[1]]$time1 <= x)
+      #p2 <- which(object[[1]]$time1 <= x)
+      X <- data.frame(object[[1]][,2*(1:ntimes)-1])
+      p2 <- whichCS(X, x=x, lower.tail=lower.tail)
+      if (length(p2) == 0) stop("Insufficient data.")
       for (k in 1: length(y)) {
-        p1 <- which(object[[1]]$time1 <= x & object[[1]]$Stime <= y[k])
-        res[k] <- 1 - sum(G1[p1])/ sum(G2[p2])
+        #p1 <- which(object[[1]]$time1 <= x & object[[1]]$Stime <= y[k])
+        X <- data.frame(object[[1]][,2*(1:ntimes)-1])
+        xy <- c(x,y[k])
+        lower.tail.y <- c(lower.tail,TRUE)
+        p1 <- whichCS(X, x=xy, lower.tail=lower.tail.y)
+        if (length(p1) == 0) stop("Insufficient data.")
+        den <- sum(G2[p2])
+        if (den == 0){
+          res[k] <- NA
+        }else{
+          res[k] <- 1 - sum(G1[p1])/ den
+          if (res[k] < 0) res[k] <- 0
+        }
       }
+
     }
 
     resu <- data.frame(cbind(y, res))
@@ -51,28 +118,82 @@ survKMW <-
         xx <- sample.int(n, size = n, replace = TRUE)
         ndata <- object[[1]][xx,]
 
+        if (ntimes == 2) {
+          if (lower.tail == FALSE)
+          {
+            if(x == 0) {
+              for (k in 1: length(y)) { res.ci[k,j] <- KM(ndata$Stime, ndata$event, y[k])}
+            }
+            else{
+              G2 <- KMW(ndata$time1, ndata$event1)
+              G1 <- KMW(ndata$Stime, ndata$event)
+              p2 <- which(ndata$time1 <= x)
 
-        if (lower.tail == FALSE)
-        {
-          G2 <- KMW(ndata$time1, ndata$event1)
-          G1 <- KMW(ndata$Stime, ndata$event)
-          p2 <- which(ndata$time1 <= x)
-          for (k in 1: length(y)) {
-            p1 <- which(ndata$time1 > x & ndata$Stime <= y[k])
-            res.ci[k, j] <- 1 - sum(G1[p1]) / (1 - sum(G2[p2]))
+              if (length(p2) == 0){
+                p2 <- which(ndata$time1 > x)
+                den <- sum(G2[p2])
+              }
+              else { den <- 1 - sum(G2[p2])}
+
+              if (den == 0) stop("Insufficient data.")
+
+
+              if (length(p2) == 0) stop("Insufficient data.")
+              for (k in 1: length(y)) {
+                p1 <- which(ndata$time1 > x & ndata$Stime <= y[k])
+                if (length(p1) == 0) stop("Insufficient data.")
+                res.ci[k, j] <- 1 - sum(G1[p1]) / den
+                if (res.ci[k, j] < 0) res.ci[k, j] <- 0
+              }
+            }
+          }
+
+          if (lower.tail == TRUE)
+          {
+            G2 <- KMW(ndata$time1, ndata$event1)
+            G1 <- KMW(ndata$Stime, ndata$event)
+            p2 <- which(ndata$time1 <= x)
+            if (length(p2) == 0) stop("Insufficient data.")
+            for (k in 1: length(y)) {
+              p1 <- which(ndata$time1 <= x & ndata$Stime <= y[k])
+              if (length(p1) == 0) stop("Insufficient data.")
+              den <- sum(G2[p2])
+              if (den == 0){
+                res.ci[k, j] <- NA
+              }else{
+                res.ci[k, j] <- 1 - sum(G1[p1]) / den
+                if (res.ci[k, j] < 0) res.ci[k,j] <- 0
+              }
+            }
           }
         }
 
-        if (lower.tail == TRUE)
-        {
-          G2 <- KMW(ndata$time1, ndata$event1)
+        if (ntimes > 2) {
+          G2 <- KMW(ndata[,2*ntimes-3], ndata[,2*ntimes-2])
           G1 <- KMW(ndata$Stime, ndata$event)
-          p2 <- which(ndata$time1 <= x)
+          #p2 <- which(ndata$time1 <= x)
+          X <- data.frame(ndata[,2*(1:ntimes)-1])
+          p2 <- whichCS(X, x=x, lower.tail=lower.tail)
+          if (length(p2) == 0) stop("Insufficient data.")
+
           for (k in 1: length(y)) {
-            p1 <- which(ndata$time1 <= x & ndata$Stime <= y[k])
-            res.ci[k, j] <- 1 - sum(G1[p1]) / sum(G2[p2])
+            #p1 <- which(ndata$time1 <= x & ndata$Stime <= y[k])
+            X <- data.frame(object[[1]][,2*(1:ntimes)-1])
+            xy <- c(x,y[k])
+            lower.tail.y <- c(lower.tail,TRUE)
+            p1 <- whichCS(X, x=xy, lower.tail=lower.tail.y)
+            if (length(p1) == 0) stop("Insufficient data.")
+            den <- sum(G2[p2])
+            if (den == 0){
+              res.ci[k, j] <- NA
+            }else{
+              res.ci[k, j] <- 1 - sum(G1[p1]) / den
+              if (res.ci[k, j] < 0) res.ci[k,j] <- 0
+            }
           }
         }
+
+
         return(res.ci)
       }
 
@@ -92,33 +213,36 @@ survKMW <-
 
       }else{
         suppressMessages(
-        res.ci <- foreach(i = 1:n.boot, .combine = cbind) %do%
-          simplebootsurvKMW(object, lower.tail, y, x)
+          res.ci <- foreach(i = 1:n.boot, .combine = cbind) %do%
+            simplebootsurvKMW(object, lower.tail, y, x)
         )
       }
 
       for (k in 1: length(y)) {
-        res.li[k] <- quantile(res.ci[k,], (1 - conf.level) / 2)
-        res.ls[k] <- quantile(res.ci[k,], 1 - (1 - conf.level) / 2)
+        res.li[k] <- quantile(res.ci[k,], (1 - conf.level) / 2, na.rm=na.rm)
+        res.ls[k] <- quantile(res.ci[k,], 1 - (1 - conf.level) / 2, na.rm=na.rm)
       }
-      if (length(y) == 1 & lower.tail == FALSE) cat("S(T>",y,"|T1>",x,") = ", res,"  ", conf.level*100,"%CI: ", res.li, "-", res.ls, sep="", "\n")
-      if (length(y) == 1 & lower.tail == TRUE) cat("S(T>",y,"|T1<=",x,") = ", res,"  ", conf.level*100,"%CI: ", res.li, "-", res.ls, sep="", "\n")
-      if (length(y) > 1) {
-        resu <- data.frame(cbind(resu, res.li, res.ls))
-        names(resu) <- c("y", "estimate", "LCI", "UCI")
-        if (lower.tail == FALSE) cat("Estimates of S(T>y|T1>",x,")", sep = "", "\n")
-        if (lower.tail == TRUE) cat("Estimates of S(T>y|T1<=",x,")", sep = "", "\n")
+
+      if (length(y) == 1) cat("P(T>",y,"|", text3, ") = ", res,"  ", conf.level*100,"%CI: ", res.li, "-", res.ls, sep = "", "\n")
+
+      if (length(y)>1) {
+        resu <- data.frame(cbind(resu,res.li,res.ls))
+        names(resu) <- c("y","estimate","LCI","UCI")
+        cat("Estimates of ", sep="")
+        cat("P(T>y|", text3, ")", sep = "", "\n")
         print(resu)
       }
+
     }
 
     if(conf==FALSE) {
-      result <- list(est = resu, estimate = res, y = y, x = x, conf = conf)
-      if (length(y) == 1 & lower.tail == FALSE) cat("S(T>",y,"|T1>",x,") = ", res, sep="", "\n")
-      if (length(y) == 1 & lower.tail == TRUE) cat("S(T>",y,"|T1<=",x,") = ", res, sep="", "\n")
-      if (length(y) > 1) {
-        if (lower.tail == FALSE) cat("Estimates of S(T>y|T1>",x,")",sep="","\n")
-        if (lower.tail == TRUE) cat("Estimates of S(T>y|T1<=",x,")",sep="","\n")
+      result <- list(est=resu, estimate=res, y=y, x=x, conf=conf)
+
+      if (length(y) == 1) cat("P(T>",y,"|",text3, ") = ", res, sep="", "\n")
+
+      if (length(y)>1) {
+        cat("Estimates of ", sep="")
+        cat("P(T>y|", text3, ")", sep = "", "\n")
         print(resu)
       }
     }
