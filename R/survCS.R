@@ -47,17 +47,12 @@ survCS <-
     datanames[2*ntimes] <- "event"
     names(data) <- datanames
 
-    if (odd == 0) {
-      if (!is.numeric(data[,2*ntimes+1]))
-        stop("All arguments must be numeric")
-      if (length(data[,2*ntimes+1]) != length(data[,1]))
-        stop("All arguments must have the same length")
-    }
+    if (odd == 0) stop("Incorrect number of variables in 'survCS' ")
 
 
     attr(data, "row.names") <- as.integer(1:length(time1))
     attr(data, "class") <- "data.frame"
-    object <- list(data = na.omit(data))
+    object <- list(data = na.omit(data), call = match.call())
     attr(object, "class") <- c("survCS", "surv")
     return(object)
   }

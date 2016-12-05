@@ -14,14 +14,13 @@ related estimators are also implemented in the package. One of these estimators 
 estimator typically assumed to estimate the survival function. A modification of the Kaplan-Meier
 estimator, based on a preliminary estimation (presmoothing) of the
 censoring probability for the survival time, given the available information is also implemented.
-
 }
 
 
 \author{
 Luis Meira-Machado and Marta Sestelo.
 
-Maintainer: Luis Meira-Machado, lmachado@math.uminho.pt
+Maintainer: Marta Sestelo, sestelo@uvigo.es
 }
 
 \references{
