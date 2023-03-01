@@ -32,9 +32,12 @@ This file documents software changes since the previous edition.
 
 
 
-# condSURV 2.0.2 (2021-04-27)
+# condSURV 2.0.2 (2022-04-27)
 
   * it has been solved the note:  ``It is good practice to register native routines and to disable symbol search.""
 
 
 
+# condSURV 2.0.2 (2022-11-14)
+
+  * it has been solved the warning:  ``warning: invalid UTF-8 in comment [-Winvalid-utf8].""

@@ -37,11 +37,11 @@ single survival curve the right hand side should be ~ 1.}
 probabilities.}
 
 \item{lower.tail}{vector of logical values with the same size as 'x'. If 'x'
-has dimension one and if lower.tail = FALSE (default), probabilities are P(T
-> y|T1 > x) otherwise, P(T > y|T1 <= x).  If the conditional event is
-2-dimensional, then, for example, given x = c(x1, x2) and lower.tail =
-c(TRUE, FALSE) must be used to obtain probabilities P(T > y|T1 <= x1, T2 >
-x2). Multi-dimensional conditional events are introduced similarly.}
+has dimension one and if \code{lower.tail = FALSE} (default), probabilities are \eqn{P(T
+> y|T1 > x)} otherwise, \eqn{P(T > y|T1 <= x)}.  If the conditional event is
+2-dimensional, then, for example, given \eqn{x = c(x1, x2)} and \code{lower.tail =
+c(TRUE, FALSE)} must be used to obtain probabilities \eqn{P(T > y|T1 <= x1, T2 >
+x2)}. Multi-dimensional conditional events are introduced similarly.}
 
 \item{method}{The method used to compute the conditional survival function.
 Possible options are "LDM" and "KMW". Defaults to "LDM".}
@@ -150,7 +150,7 @@ Possible options for argument window are "gaussian", "epanechnikov",
 
 
 
- 
+
 }
 \references{
 L. Meira-Machado, M. Sestelo, and A. Goncalves (2016).

@@ -1,11 +1,11 @@
 #' Estimation of the conditional distribution function of the response, given
 #' the covariate under random censoring.
-#' 
+#'
 #' Computes the conditional survival probability P(T > y|Z = z)
-#' 
+#'
 #' Possible options for argument window are "gaussian", "epanechnikov",
 #' "tricube", "boxcar", "triangular", "quartic" or "cosine".
-#' 
+#'
 #' @param time The survival time of the process.
 #' @param status Censoring indicator of the total time of the process; 0 if the
 #' total time is censored and 1 otherwise.
@@ -20,25 +20,25 @@
 #' below for possible options. Defaults to "gaussian" where the gaussian
 #' density kernel will be used.
 #' @param bw A single numeric value to compute a kernel density bandwidth.
-#' @param lower.tail logical; if FALSE (default), probabilities are P(T > y|Z =
-#' z) otherwise, P(T <= y|Z = z).
+#' @param lower.tail logical; if FALSE (default), probabilities are \eqn{P(T > y|Z =
+#' z)} otherwise, \eqn{P(T <= y|Z = z)}.
 #' @author Luis Meira-Machado and Marta Sestelo
 #' @references R. Beran. Nonparametric regression with randomly censored
 #' survival data. Technical report, University of California, Berkeley, 1981.
 #' @examples
-#' 
+#'
 #' obj <- with(colonCS, survCS(time1, event1, Stime, event))
-#' 
+#'
 #' #P(T>y|age=45)
 #' library(KernSmooth)
 #' h <- dpik(colonCS$age)
 #' Beran(time = obj$Stime, status = obj$event, covariate = colonCS$age,
 #' x = 45, y = 730, bw = h)
-#' 
+#'
 #' #P(T<=y|age=45)
 #' Beran(time = obj$Stime, status = obj$event, covariate = colonCS$age,
 #' x = 45, y = 730, bw = h, lower.tail = TRUE)
-#' 
+#'
 Beran <-
   function(time, status, covariate, delta, x, y, kernel = "gaussian", bw,
            lower.tail = FALSE) {

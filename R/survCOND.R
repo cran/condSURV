@@ -1,13 +1,13 @@
 #' Conditional survival probabilities based on the Kaplan-Meier weights,
 #' Landmark approaches and Inverse probability of censoring weighted.
-#' 
+#'
 #' Provides estimates for the conditional survival probabilities based on
 #' Kaplan-Meier weighted estimators, the Landmark approaches and Inverse
 #' probability of censoring weighted.
-#' 
+#'
 #' Possible options for argument window are "gaussian", "epanechnikov",
 #' "tricube", "boxcar", "triangular", "quartic" or "cosine".
-#' 
+#'
 #' @param formula A formula object, which must have a \code{survCS} object as
 #' the response on the left of the \code{~} operator and, if desired, a term on
 #' the right. The term may be a qualitative or quantitative variable.  For a
@@ -16,11 +16,11 @@
 #' @param y The total time for obtaining estimates for the conditional survival
 #' probabilities.
 #' @param lower.tail vector of logical values with the same size as 'x'. If 'x'
-#' has dimension one and if lower.tail = FALSE (default), probabilities are P(T
-#' > y|T1 > x) otherwise, P(T > y|T1 <= x).  If the conditional event is
-#' 2-dimensional, then, for example, given x = c(x1, x2) and lower.tail =
-#' c(TRUE, FALSE) must be used to obtain probabilities P(T > y|T1 <= x1, T2 >
-#' x2). Multi-dimensional conditional events are introduced similarly.
+#' has dimension one and if \code{lower.tail = FALSE} (default), probabilities are \eqn{P(T
+#' > y|T1 > x)} otherwise, \eqn{P(T > y|T1 <= x)}.  If the conditional event is
+#' 2-dimensional, then, for example, given \eqn{x = c(x1, x2)} and \code{lower.tail =
+#' c(TRUE, FALSE)} must be used to obtain probabilities \eqn{P(T > y|T1 <= x1, T2 >
+#' x2)}. Multi-dimensional conditional events are introduced similarly.
 #' @param method The method used to compute the conditional survival function.
 #' Possible options are "LDM" and "KMW". Defaults to "LDM".
 #' @param presmooth A logical value. If \code{TRUE}, the presmoothed landmark
@@ -73,44 +73,44 @@
 #' expression of the estimated probability.} \item{levels}{The levels of the
 #' qualitative covariate (if it is of class factor) on the right hand side of
 #' formula.}
-#' 
+#'
 #' @author Luis Meira-Machado and Marta Sestelo
 #' @references L. Meira-Machado, M. Sestelo, and A. Goncalves (2016).
 #' Nonparametric estimation of the survival function for ordered multivariate
 #' failure time data: a comparative study. Biometrical Journal, 58(3),
 #' 623--634.
 #' @examples
-#' 
-#' 
+#'
+#'
 #'    fit <- survCOND(survCS(time1, event1, Stime, event) ~ 1, x = 365, y = 730,
 #'    data = colonCS, method = "KMW", conf = FALSE)
-#' 
+#'
 #'    fit1 <- survCOND(survCS(time1, event1, Stime, event) ~ 1, x = 365,
 #'    data = colonCS, method = "LDM", conf = FALSE)
-#' 
+#'
 #'    fit2 <- survCOND(survCS(time1, event1, Stime, event) ~ 1, x = 365,
 #'    data = colonCS, method = "LDM", lower.tail = TRUE, conf = FALSE)
-#' 
+#'
 #'    fit3 <- survCOND(survCS(time1, event1, Stime, event) ~ 1, x = 365,
 #'    y = c(730, 1095, 1460), data = colonCS, method = "LDM", presmooth = TRUE,
 #'    lower.tail = TRUE, conf = TRUE, n.boot = 100, conf.level = 0.95,
 #'    cluster = FALSE)
-#' 
+#'
 #'    fit4 <- survCOND(survCS(time1, event1, Stime, event) ~ rx, x = 365,
 #'    data = colonCS, method = "LDM", conf = FALSE)
-#' 
+#'
 #'    fit5 <- survCOND(survCS(time1, event1, Stime, event) ~ factor(sex),
 #'    x = 365, data = colonCS, method = "LDM", conf = FALSE)
-#' 
+#'
 #'   \dontrun{
 #'    fit6 <- survCOND(survCS(time1, event1, Stime, event) ~ age,
 #'    x = 365, y = 730, z.value = 48, data = colonCS, conf = TRUE)
 #'    }
-#' 
-#' 
-#' 
-#' 
-#'  
+#'
+#'
+#'
+#'
+#'
 #' @export survCOND
 survCOND <- function(formula, x, y, lower.tail = FALSE, method = "LDM",
                      presmooth = FALSE, conf = TRUE, n.boot = 200, data,

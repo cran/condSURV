@@ -40,8 +40,8 @@ density kernel will be used.}
 
 \item{bw}{A single numeric value to compute a kernel density bandwidth.}
 
-\item{lower.tail}{logical; if FALSE (default), probabilities are P(T > y|Z =
-z) otherwise, P(T <= y|Z = z).}
+\item{lower.tail}{logical; if FALSE (default), probabilities are \eqn{P(T > y|Z =
+z)} otherwise, \eqn{P(T <= y|Z = z)}.}
 }
 \description{
 Computes the conditional survival probability P(T > y|Z = z)
